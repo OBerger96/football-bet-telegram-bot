@@ -2,8 +2,10 @@ import logging
 from datetime import datetime
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from bets_handler import Bet, BetsHandler
-from matches_handler import MatchesHandler
+
+import secrets
+from handler.bets_handler import Bet, BetsHandler
+from handler.matches_handler import MatchesHandler
 
 HELP = "help"
 HELP_ARGS_LEN = 0
@@ -72,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 class CommandsHandler:
     def __init__(self):
-        self.bets_handler = BetsHandler(BetsHandler.BETS_DB)
+        self.bets_handler = BetsHandler(secrets.BETS_DB)
         self.matches_handler = MatchesHandler()
 
     def error(self, update, context):
@@ -369,8 +371,7 @@ class CommandsHandler:
 
 
 def main():
-    # updater = Updater("1804390138:AAF3qeSyYFBcjHyDEGif3UbXAP5fCTCSzUw", use_context=True)  # TESTER
-    updater = Updater("5469557083:AAGqa0y7ZubAtlQyi2IULHOUmWzmGYqulK8", use_context=True)  # PRODUCTION
+    updater = Updater(secrets.test_token, use_context=True)  # PRODUCTION
     dispatcher = updater.dispatcher
     commands_handler = CommandsHandler()
 

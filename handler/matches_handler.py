@@ -7,6 +7,8 @@ import requests
 from dateutil import parser as dateParser
 from numpy import sign
 
+import secrets
+
 
 def get_current_time():
     return datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=3)
@@ -140,15 +142,12 @@ class Match:
 
 
 class MatchesHandler:
-    HEADERS = {'X-Auth-Token': 'a5b3683eec044716a6c0730cb9c56917'}
-    URL = 'https://api.football-data.org/v2'
-    URL_COMPETITION = f'{URL}/competitions/WC/matches'
 
     def __init__(self):
         self.reload_all_matches()
 
     def reload_all_matches(self):
-        request = requests.get(url=MatchesHandler.URL_COMPETITION, headers=MatchesHandler.HEADERS)
+        request = requests.get(url=secrets.URL_COMPETITION_MATCHES, headers=secrets.HEADERS)
         response_matches = json.loads(request.content)['matches']
         matches_list = [Match.from_web_json(match_json) for match_json in response_matches]
         self.matches = {match.get_id(): match for match in matches_list}

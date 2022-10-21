@@ -1,5 +1,7 @@
 import sqlite3
 
+import secrets
+
 
 class Bet:
     match_id: int
@@ -29,9 +31,6 @@ class Bet:
 
 
 class BetsHandler:
-    BETS_DB = "euro2021bets.db"
-    BETS_TESTS_DB = "euro2021bets-tests.db"
-
     TABLE_NAME_FORMAT = "bets_of_{}"
     CREATE_USERS_QUERY = """
         CREATE TABLE users(
@@ -198,7 +197,7 @@ class BetsHandler:
 
 if __name__ == "__main__":
     print('----------------- Testing DB handler ---------------------------')
-    bets_handler = BetsHandler(BetsHandler.BETS_TESTS_DB)
+    bets_handler = BetsHandler(secrets.BETS_TESTS_DB)
     print("Successfully Connected to SQLite")
 
     bets_handler.create_bets_table(123, 'Simba')

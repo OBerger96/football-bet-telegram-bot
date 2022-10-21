@@ -23,49 +23,55 @@ class Bet:
     def __repr__(self):
         return f"Bet(match_id={self.match_id}, home_score={self.home_score}, away_score={self.away_score})"
 
-    def get_match_id(self):
+    def _get_match_id(self):
         return self.match_id
 
-    def get_scores(self):
+    def _get_scores(self):
         return [self.home_score, self.away_score]
 
 
 class BetsHandler:
-    TABLE_NAME_FORMAT = "bets_of_{}"
+    _TABLE_NAME_FORMAT = "bets_of_{}"
+
     CREATE_USERS_QUERY = """
         CREATE TABLE users(
         bettor_id INTEGER NOT NULL PRIMARY KEY,
         bettor_name TEXT NOT NULL);
     """
+
     INSERT_TABLE_USER_QUERY = """
         REPLACE INTO users
         (bettor_id, bettor_name)
         VALUES (?,?);
     """
+
     SELECT_ALL_USERS_QUERY = """
         SELECT *
         FROM users;
     """
 
     CREATE_BETS_TABLE_QUERY = f"""
-        CREATE TABLE {TABLE_NAME_FORMAT}(
+        CREATE TABLE {_TABLE_NAME_FORMAT}(
         match_id INTEGER NOT NULL PRIMARY KEY,
         home_score INTEGER NOT NULL,
         away_score INTEGER NOT NULL);
     """
+
     INSERT_BET_QUERY = f"""
-        REPLACE INTO {TABLE_NAME_FORMAT}
+        REPLACE INTO {_TABLE_NAME_FORMAT}
         (match_id, home_score, away_score) 
         VALUES (?,?,?);
     """
+
     SELECT_BET_QUERY = f"""
         SELECT * 
-        FROM {TABLE_NAME_FORMAT} 
+        FROM {_TABLE_NAME_FORMAT} 
         WHERE match_id=?;
     """
+
     SELECT_ALL_BETS_QUERY = f"""
         SELECT * 
-        FROM {TABLE_NAME_FORMAT};
+        FROM {_TABLE_NAME_FORMAT};
     """
 
     CREATE_BONUSES_TABLE_QUERY = """
@@ -73,15 +79,18 @@ class BetsHandler:
         bettor_id INTEGER NOT NULL PRIMARY KEY,
         bonus INTEGER NOT NULL);
     """
+
     SELECT_BONUS_QUERY = f"""
         SELECT * 
         FROM bonuses
         WHERE bettor_id=?;
     """
+
     SELECT_BONUSES_QUERY = f"""
         SELECT * 
         FROM bonuses;
     """
+
     UPDATE_BONUS_QUERY = f"""
         REPLACE INTO bonuses
         (bettor_id, bonus) 
@@ -97,24 +106,24 @@ class BetsHandler:
     def __init__(self, db_name):
         self.db_name = db_name
 
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             try:
                 connection.execute(BetsHandler.CREATE_USERS_QUERY)
             except:
                 pass
 
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             try:
                 connection.execute(BetsHandler.CREATE_BONUSES_TABLE_QUERY)
             except:
                 pass
 
     @staticmethod
-    def create_connection(db_name):
+    def _create_connection(db_name):
         return sqlite3.connect(db_name)
 
     def create_bets_table(self, bettor_id, bettor_name):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             try:
                 connection.execute(BetsHandler.CREATE_BETS_TABLE_QUERY.format(bettor_id))
             except:
@@ -125,7 +134,7 @@ class BetsHandler:
             connection.commit()
 
     def get_bettors(self):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
             cursor.execute(BetsHandler.SELECT_ALL_USERS_QUERY)
             users = cursor.fetchall()
@@ -136,12 +145,12 @@ class BetsHandler:
         return bettor_id in self.get_bettors().keys()
 
     def place_bet(self, bettor_id, bet):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             connection.execute(BetsHandler.INSERT_BET_QUERY.format(bettor_id), (bet.match_id, bet.home_score, bet.away_score))
             connection.commit()
 
     def get_bet(self, bettor_id, match_id):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
             cursor.execute(BetsHandler.SELECT_BET_QUERY.format(bettor_id), (match_id,))
             bet_values = cursor.fetchall()[0]
@@ -149,7 +158,7 @@ class BetsHandler:
         return Bet(*bet_values)
 
     def get_bettor_bets(self, bettor_id):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
             cursor.execute(BetsHandler.SELECT_ALL_BETS_QUERY.format(bettor_id))
             all_bets = cursor.fetchall()
@@ -159,7 +168,7 @@ class BetsHandler:
     def get_match_bets(self, match_id):
         match_bets = {}
 
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
 
             cursor.execute(BetsHandler.SELECT_ALL_USERS_QUERY)
@@ -174,13 +183,13 @@ class BetsHandler:
         return match_bets
 
     def get_bonus(self, bettor_id):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
             cursor.execute(BetsHandler.SELECT_BONUS_QUERY, (bettor_id,))
             return cursor.fetchall()[0][BetsHandler.BONUS]
 
     def get_bonuses(self):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             cursor = connection.cursor()
             cursor.execute(BetsHandler.SELECT_BONUSES_QUERY)
             bonuses = cursor.fetchall()
@@ -188,7 +197,7 @@ class BetsHandler:
             return {bonus[BetsHandler.USER_ID]: bonus[BetsHandler.BONUS] for bonus in bonuses}
 
     def add_bonus(self, bettor_id, added_bonus):
-        with self.create_connection(self.db_name) as connection:
+        with self._create_connection(self.db_name) as connection:
             connection.execute(BetsHandler.UPDATE_BONUS_QUERY, (bettor_id, self.get_bonus(bettor_id) + added_bonus))
             connection.commit()
 

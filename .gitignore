@@ -1,3 +1,0 @@
-#ignoring specfic file
-.secrets.py
-.handler/bot_mail_handler.py

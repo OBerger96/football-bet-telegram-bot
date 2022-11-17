@@ -72,7 +72,7 @@ class Match:
 
     @staticmethod
     def _set_datetime_in_israel(datetime: str):
-        return dateParser.parse(datetime) + timedelta(hours=3)
+        return dateParser.parse(datetime) + timedelta(hours=2)
 
     def get_datetime(self):
         return self.date_time
@@ -147,7 +147,7 @@ class MatchesHandler:
         self.reload_all_matches()
 
     def reload_all_matches(self):
-        request = requests.get(url=secrets.URL_COMPETITION_MATCHES, headers=secrets.HEADERS)
+        request = requests.get(url='https://api.football-data.org/v2/competitions/WC/matches', headers={'X-Auth-Token': 'a5b3683eec044716a6c0730cb9c56917'})
         response_matches = json.loads(request.content)['matches']
         matches_list = [Match.from_web_json(match_json) for match_json in response_matches]
         self.matches = {match.get_id(): match for match in matches_list}

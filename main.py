@@ -3,7 +3,7 @@ from datetime import datetime
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-import secrets
+import values
 from handler.bets_handler import Bet, BetsHandler
 from handler.matches_handler import MatchesHandler
 
@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 class CommandsHandler:
     def __init__(self):
-        self.bets_handler = BetsHandler(secrets.BETS_DB)
+        self.bets_handler = BetsHandler(values.DB_NAME)
         self.matches_handler = MatchesHandler()
 
     def error(self, update, context):
@@ -371,7 +371,7 @@ class CommandsHandler:
 
 
 def main():
-    updater = Updater(secrets.test_token, use_context=True)  # PRODUCTION
+    updater = Updater(values.TOKEN, use_context=True)  # PRODUCTION
     dispatcher = updater.dispatcher
     commands_handler = CommandsHandler()
 

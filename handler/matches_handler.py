@@ -1,13 +1,13 @@
 import datetime
 import json
 from datetime import timedelta
-from typing import List
+from typing import List, Dict
 
 import requests
 from dateutil import parser as dateParser
 from numpy import sign
 
-import secrets
+import values
 
 
 def get_current_time():
@@ -17,7 +17,7 @@ def get_current_time():
 class Match:
     match_id: int
     match_day: int
-    date_time: str
+    date_time: datetime
     home_team: str
     away_team: str
     score_home_team: int
@@ -30,7 +30,7 @@ class Match:
                  away_team: str,
                  score_home_team: int,
                  score_away_team: int):
-        self.match_id = match_id - 391881 + 1
+        self.match_id = match_id - values.FIRST_MATCH_ID + 1
         self.match_day = match_day
         self.date_time = date_time
         self.home_team = home_team
@@ -71,8 +71,8 @@ class Match:
         return full_time_score
 
     @staticmethod
-    def _set_datetime_in_israel(datetime: str):
-        return dateParser.parse(datetime) + timedelta(hours=2)
+    def _set_datetime_in_israel(match_datetime: str):
+        return dateParser.parse(match_datetime) + timedelta(hours=2)
 
     def get_datetime(self):
         return self.date_time
@@ -142,12 +142,14 @@ class Match:
 
 
 class MatchesHandler:
+    next_reload_time: datetime
+    matches: Dict
 
     def __init__(self):
         self.reload_all_matches()
 
     def reload_all_matches(self):
-        request = requests.get(url='https://api.football-data.org/v2/competitions/WC/matches', headers={'X-Auth-Token': 'a5b3683eec044716a6c0730cb9c56917'})
+        request = requests.get(url=values.URL_COMPETITION_MATCHES, headers=values.HEADERS)
         response_matches = json.loads(request.content)['matches']
         matches_list = [Match.from_web_json(match_json) for match_json in response_matches]
         self.matches = {match.get_id(): match for match in matches_list}
@@ -180,20 +182,19 @@ if __name__ == "__main__":
     print('----------------- Testing initialization ---------------------------')
     handler = MatchesHandler()
 
-    print('----------------- Testing get match by id ---------------------------')
-
+    print('\n----------------- Testing get match by id ---------------------------')
     matches_ids = [match.match_id for match in handler.get_all_matches()]
     matches_ids.sort()
     print(matches_ids)
 
     print(handler.get_match_by_id(1))
 
-    print('----------------- Testing get all matches ---------------------------')
+    print('\n----------------- Testing get all matches ---------------------------')
     matches = handler.get_all_matches()
     for match in matches:
         print(match)
 
-    print('----------------- Testing Match format ---------------------------')
+    print('\n----------------- Testing Match format ---------------------------')
     match = handler.get_match_by_id(1)
     print(match.format("%date% %time%"))
     print(match.format("%time% %date%"))

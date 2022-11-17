@@ -1,6 +1,6 @@
 import sqlite3
 
-import secrets
+import values
 
 
 class Bet:
@@ -206,7 +206,7 @@ class BetsHandler:
 
 if __name__ == "__main__":
     print('----------------- Testing DB handler ---------------------------')
-    bets_handler = BetsHandler(secrets.BETS_TESTS_DB)
+    bets_handler = BetsHandler(values.TEST_DB_NAME)
     print("Successfully Connected to SQLite")
 
     bets_handler.create_bets_table(123, 'Simba')

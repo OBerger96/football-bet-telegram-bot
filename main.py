@@ -49,6 +49,9 @@ TODAY_ARGS_LEN = 0
 REMAINING = "remaining"
 REMAINING_ARGS_LEN = 0
 
+LONG_REPLAY_FORMAT = "%id% - %time% - %home% vs %away%\n"
+SHORT_REPLAY_FORMAT = "\n%date%:\n"
+
 USAGES = {
     HELP: f"/{HELP} [command] - Show this help message",
     MATCH: f"/{MATCH} <match-id> - Get all bets and scores of a past match",
@@ -77,11 +80,13 @@ class CommandsHandler:
         self.bets_handler = BetsHandler(values.DB_NAME)
         self.matches_handler = MatchesHandler()
 
-    def error(self, update, context):
+    @staticmethod
+    def error(update, context):
         """Log Errors caused by Updates."""
         logger.warning("An update caused the error '%s'", context.error)
 
-    def usage(self, update, command=None):
+    @staticmethod
+    def usage(update, command=None):
         if command in USAGES.keys():
             return f"Usage: {USAGES[command]}"
         else:
@@ -109,15 +114,15 @@ class CommandsHandler:
             return
 
         user_bets = self.bets_handler.get_bettor_bets(update.message.chat.id)
-        past_bets = [bet for bet in user_bets if self.matches_handler.get_match_by_id(bet._get_match_id()).is_finished()]
-        past_bets.sort(key=lambda bet: self.matches_handler.get_match_by_id(bet._get_match_id()).get_datetime())
+        past_bets = [bet for bet in user_bets if self.matches_handler.get_match_by_id(bet.get_match_id()).is_finished()]
+        past_bets.sort(key=lambda bet: self.matches_handler.get_match_by_id(bet.get_match_id()).get_datetime())
 
         total_points = 0
 
         reply = "Past bets:\n"
         for bet in past_bets:
-            past_bet_match = self.matches_handler.get_match_by_id(bet._get_match_id())
-            bet_scores = bet._get_scores()
+            past_bet_match = self.matches_handler.get_match_by_id(bet.get_match_id())
+            bet_scores = bet.get_scores()
             points_on_bet = past_bet_match.points_on_bet(*bet_scores)
             total_points += points_on_bet
             reply += past_bet_match.format(
@@ -143,17 +148,17 @@ class CommandsHandler:
             return
 
         user_bets = self.bets_handler.get_bettor_bets(update.message.chat.id)
-        future_bets = [bet for bet in user_bets if self.matches_handler.get_match_by_id(bet._get_match_id())]
-        future_bets.sort(key=lambda bet: self.matches_handler.get_match_by_id(bet._get_match_id()).get_datetime())
+        future_bets = [bet for bet in user_bets if self.matches_handler.get_match_by_id(bet.get_match_id())]
+        future_bets.sort(key=lambda bet: self.matches_handler.get_match_by_id(bet.get_match_id()).get_datetime())
 
         reply = ""
         current_date = None
         for bet in future_bets:
-            match = self.matches_handler.get_match_by_id(bet._get_match_id())
+            match = self.matches_handler.get_match_by_id(bet.get_match_id())
             if match.get_datetime().date() != current_date:
-                reply += match.format("\n%date%:\n")
+                reply += match.format(SHORT_REPLAY_FORMAT)
                 current_date = match.get_datetime().date()
-            reply += match.format(f"%id% - %time% - %home% ({bet._get_scores()[0]}) - %away% ({bet._get_scores()[1]})\n")
+            reply += match.format(f"%id% - %time% - %home% ({bet.get_scores()[0]}) - %away% ({bet.get_scores()[1]})\n")
 
         if reply:
             update.message.reply_text(reply)
@@ -168,7 +173,7 @@ class CommandsHandler:
         able_to_bet_matches = [match.get_id() for match in self.matches_handler.get_all_matches() if match.is_future()]
         able_to_bet_matches.sort(key=lambda match_id: self.matches_handler.get_match_by_id(match_id).get_datetime())
         user_bets = self.bets_handler.get_bettor_bets(update.message.chat.id)
-        user_bets_matches = [bet._get_match_id() for bet in user_bets]
+        user_bets_matches = [bet.get_match_id() for bet in user_bets]
         missing_bets = [match_id for match_id in able_to_bet_matches if match_id not in user_bets_matches]
 
         missing_text = ""
@@ -204,7 +209,7 @@ class CommandsHandler:
 
         self.bets_handler.place_bet(update.message.chat.id, my_bet)
 
-        update.message.reply_text(past_bet_match.format(f"Placed bet: %home% ({my_bet._get_scores()[0]}) - %away% ({my_bet._get_scores()[1]})"))
+        update.message.reply_text(past_bet_match.format(f"Placed bet: %home% ({my_bet.get_scores()[0]}) - %away% ({my_bet.get_scores()[1]})"))
 
     def cmd_bonus(self, update, context):
         if len(context.args) != BONUS_ARGS_LEN and ( \
@@ -243,10 +248,10 @@ class CommandsHandler:
         current_date = None
         for match in future_matches:
             if match.get_datetime().date() != current_date:
-                reply += match.format("\n%date%:\n")
+                reply += match.format(SHORT_REPLAY_FORMAT)
                 current_date = match.get_datetime().date()
 
-            reply += match.format("%id% - %time% - %home% vs %away%\n")
+            reply += match.format(LONG_REPLAY_FORMAT)
 
         if len(reply.strip()) == 0:
             update.message.reply_text("No future matches")
@@ -267,13 +272,13 @@ class CommandsHandler:
         current_date = None
         for match in future_matches:
             if match.get_datetime().date() != current_date:
-                reply += match.format("\n%date%:\n")
+                reply += match.format(SHORT_REPLAY_FORMAT)
                 current_date = match.get_datetime().date()
 
             if match.is_finished():
                 reply += match.format("%id% - %time% - %home% (%home-score%) vs (%away-score%) %away%\n")
             else:
-                reply += match.format("%id% - %time% - %home% vs %away%\n")
+                reply += match.format(LONG_REPLAY_FORMAT)
 
         if len(reply.strip()) == 0:
             update.message.reply_text("No future matches")
@@ -302,7 +307,7 @@ class CommandsHandler:
         bettors = self.bets_handler.get_bettors()
 
         for bettor in match_bets.keys():
-            bettor_bet = match_bets[bettor]._get_scores()
+            bettor_bet = match_bets[bettor].get_scores()
             reply += f"{bettors[bettor]}: {bettor_bet[0]}-{bettor_bet[1]} ({requested_match.points_on_bet(*bettor_bet)} points)\n"
 
         update.message.reply_text(reply)
@@ -318,11 +323,11 @@ class CommandsHandler:
 
         for bettor in bettors.keys():
             bets = self.bets_handler.get_bettor_bets(bettor)
-            past_bets = [bet for bet in bets if self.matches_handler.get_match_by_id(bet._get_match_id()).is_finished()]
+            past_bets = [bet for bet in bets if self.matches_handler.get_match_by_id(bet.get_match_id()).is_finished()]
 
             for bet in past_bets:
-                past_bet_match = self.matches_handler.get_match_by_id(bet._get_match_id())
-                bettors_scores[bettor] += past_bet_match.points_on_bet(*bet._get_scores())
+                past_bet_match = self.matches_handler.get_match_by_id(bet.get_match_id())
+                bettors_scores[bettor] += past_bet_match.points_on_bet(*bet.get_scores())
 
             if bettor in bettors_bonuses.keys():
                 bettors_scores[bettor] += bettors_bonuses[bettor]
@@ -337,10 +342,12 @@ class CommandsHandler:
 
         update.message.reply_text(reply)
 
-    def remove_id_tag(self, text):
+    @staticmethod
+    def remove_id_tag(text):
         return text.lstrip('#')
 
-    def remove_sign(self, text):
+    @staticmethod
+    def remove_sign(text):
         if '-' in text:
             return text.replace('-', '', 1)
 
@@ -359,9 +366,9 @@ class CommandsHandler:
         current_date = datetime.now().date()
         for match in future_matches:
             if match.get_datetime().date() == current_date:
-                reply += match.format("\n%date%:\n")
+                reply += match.format(SHORT_REPLAY_FORMAT)
                 current_date = match.get_datetime().date()
-                reply += match.format("%id% - %time% - %home% vs %away%\n")
+                reply += match.format(LONG_REPLAY_FORMAT)
 
         if len(reply.strip()) == 0:
             update.message.reply_text("No matches today")

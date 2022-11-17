@@ -23,10 +23,10 @@ class Bet:
     def __repr__(self):
         return f"Bet(match_id={self.match_id}, home_score={self.home_score}, away_score={self.away_score})"
 
-    def _get_match_id(self):
+    def get_match_id(self):
         return self.match_id
 
-    def _get_scores(self):
+    def get_scores(self):
         return [self.home_score, self.away_score]
 
 

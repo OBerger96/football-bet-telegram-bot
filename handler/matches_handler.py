@@ -11,7 +11,7 @@ import values
 
 
 def get_current_time():
-    return datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=3)
+    return datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=values.HOURS_DIFF)
 
 
 class Match:
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     matches_ids.sort()
     print(matches_ids)
 
-    print(handler.get_match_by_id(1))
+    print(handler.get_match_by_id(2))
 
     print('\n----------------- Testing get all matches ---------------------------')
     matches = handler.get_all_matches()

@@ -157,13 +157,7 @@ class MatchesHandler:
 
     @staticmethod
     def get_next_reload_time():
-        current_time = get_current_time().time()
-        is_between_00_00_to_01_00 = datetime.time(1, 0) >= current_time >= datetime.time(0, 0)
-        is_between_16_00_to_23_59 = datetime.time(23, 59) >= current_time >= datetime.time(16, 0)
-
-        if is_between_00_00_to_01_00 or is_between_16_00_to_23_59:
-            return get_current_time() + timedelta(minutes=10)
-        return get_current_time() + timedelta(hours=1)
+        return get_current_time() + timedelta(minutes=10)
 
     def reload_if_needed(self):
         if self.next_reload_time <= get_current_time():
